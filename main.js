@@ -111,9 +111,29 @@ function CreateSurfaceData() {
     horizontalPoints[count++] = coords;
   }
 
+  count = 0;
+
+  for (let i = 0; i < horizontalPoints[0].length; i += 3) {
+    let coords = [];
+    for (let j = 0; j < horizontalPoints.length; j++) {
+      coords.push(
+        horizontalPoints[j][i],
+        horizontalPoints[j][i + 1],
+        horizontalPoints[j][i + 2]
+      );
+    }
+    verticalPoints[count++] = coords;
+  }
+
   for (let i = 0; i < horizontalPoints.length; i++) {
     for (let j = 0; j < horizontalPoints[0].length; j++) {
       vertexList.push(horizontalPoints[i][j]);
+    }
+  }
+
+  for (let i = 0; i < verticalPoints.length; i++) {
+    for (let j = 0; j < verticalPoints[0].length; j++) {
+      vertexList.push(verticalPoints[i][j]);
     }
   }
 
