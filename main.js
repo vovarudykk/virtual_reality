@@ -5,10 +5,6 @@ let surface; // A surface model
 let shProgram; // A shader program
 let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse.
 
-// function deg2rad(angle) {
-//     return angle * Math.PI / 180;
-// }
-
 const a = 6;
 const b = 15;
 
@@ -72,13 +68,13 @@ function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
-  let projection = m4.perspective(Math.PI / 2, 1, 8, 100);
+  let projection = m4.perspective(Math.PI / 3, 1, 1, 1000);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
-  let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
-  let translateToPointZero = m4.translation(0, 0, -10);
+  let rotateToPointZero = m4.axisRotation([1, 0, 0], 1);
+  let translateToPointZero = m4.translation(0, 2, -10);
 
   let matAccum0 = m4.multiply(rotateToPointZero, modelView);
   let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
@@ -102,13 +98,23 @@ function draw() {
 function CreateSurfaceData() {
   let vertexList = [];
 
-  let level = 0;
+  let horizontalPoints = [];
+  let verticalPoints = [];
 
-  for (let z = 0; z <= a; z += a / 30) {
+  let count = 0;
+
+  for (let z = 0; z <= a; z += a / 21) {
+    let coords = [];
     for (let beta = 0; beta <= 2 * Math.PI; beta += Math.PI / 10) {
-      vertexList.push(x(r(z), beta), y(r(z), beta), z);
+      coords.push(x(r(z), beta), y(r(z), beta), z);
     }
-    level += 1;
+    horizontalPoints[count++] = coords;
+  }
+
+  for (let i = 0; i < horizontalPoints.length; i++) {
+    for (let j = 0; j < horizontalPoints[0].length; j++) {
+      vertexList.push(horizontalPoints[i][j]);
+    }
   }
 
   return vertexList;
