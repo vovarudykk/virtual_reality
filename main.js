@@ -5,25 +5,31 @@ let surface; // A surface model
 let shProgram; // A shader program
 let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse.
 
-const a = 6;
-const b = 15;
+let splines = 50;
+// const a = 6;
+// const b = 15;
 
-const r = (z) => {
-  return z * Math.sqrt((z * (a - z)) / b);
-};
+function deg2rad(angle) {
+  return (angle * Math.PI) / 180;
+}
 
-const x = (z, beta) => {
-  return r(z) * Math.sin(beta);
-};
+// const r = (z) => {
+//   return z * Math.sqrt((z * (a - z)) / b);
+// };
 
-const y = (z, beta) => {
-  return r(z) * Math.cos(beta);
-};
+// const x = (z, beta) => {
+//   return r(z) * Math.sin(beta);
+// };
+
+// const y = (z, beta) => {
+//   return r(z) * Math.cos(beta);
+// };
 
 // Constructor
 function Model(name) {
   this.name = name;
   this.iVertexBuffer = gl.createBuffer();
+
   this.count = 0;
 
   this.BufferData = function (vertices) {
@@ -38,7 +44,12 @@ function Model(name) {
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iAttribVertex);
 
-    gl.drawArrays(gl.LINE_STRIP, 0, this.count);
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
+
+    for (let i = 0; i < (splines + 1) * 2; i++) {
+      gl.drawArrays(gl.TRIANGLE_STRIP, i * splines, splines);
+      // gl.drawArrays(gl.LINE_STRIP, i * splines, splines);
+    }
   };
 }
 
@@ -68,13 +79,13 @@ function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
-  let projection = m4.perspective(Math.PI / 3, 1, 1, 1000);
+  let projection = m4.perspective(Math.PI / 8, 1, 8, 12);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
-  let rotateToPointZero = m4.axisRotation([1, 0, 0], 1);
-  let translateToPointZero = m4.translation(0, 2, -10);
+  let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
+  let translateToPointZero = m4.translation(0, 0, -10);
 
   let matAccum0 = m4.multiply(rotateToPointZero, modelView);
   let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
@@ -96,44 +107,40 @@ function draw() {
 }
 
 function CreateSurfaceData() {
+  let a = 0.5;
+  let b = 1;
+
   let vertexList = [];
 
-  let horizontalPoints = [];
-  let verticalPoints = [];
-
-  let count = 0;
-
-  for (let z = 0; z <= a; z += a / 21) {
-    let coords = [];
-    for (let beta = 0; beta <= 2 * Math.PI; beta += Math.PI / 10) {
-      coords.push(x(r(z), beta), y(r(z), beta), z);
-    }
-    horizontalPoints[count++] = coords;
-  }
-
-  count = 0;
-
-  for (let i = 0; i < horizontalPoints[0].length; i += 3) {
-    let coords = [];
-    for (let j = 0; j < horizontalPoints.length; j++) {
-      coords.push(
-        horizontalPoints[j][i],
-        horizontalPoints[j][i + 1],
-        horizontalPoints[j][i + 2]
+  for (let u = 0; u <= 180; u += 180 / (splines - 1)) {
+    for (let v = 0; v <= 360; v += 360 / (splines - 1)) {
+      vertexList.push(
+        a *
+          (b - Math.cos(deg2rad(u))) *
+          Math.sin(deg2rad(u)) *
+          Math.cos(deg2rad(v)),
+        a *
+          (b - Math.cos(deg2rad(u))) *
+          Math.sin(deg2rad(u)) *
+          Math.sin(deg2rad(v)),
+        Math.cos(deg2rad(u))
       );
     }
-    verticalPoints[count++] = coords;
   }
 
-  for (let i = 0; i < horizontalPoints.length; i++) {
-    for (let j = 0; j < horizontalPoints[0].length; j++) {
-      vertexList.push(horizontalPoints[i][j]);
-    }
-  }
-
-  for (let i = 0; i < verticalPoints.length; i++) {
-    for (let j = 0; j < verticalPoints[0].length; j++) {
-      vertexList.push(verticalPoints[i][j]);
+  for (let v = 0; v <= 360; v += 360 / (splines - 1)) {
+    for (let u = 0; u <= 180; u += 180 / (splines - 1)) {
+      vertexList.push(
+        a *
+          (b - Math.cos(deg2rad(u))) *
+          Math.sin(deg2rad(u)) *
+          Math.cos(deg2rad(v)),
+        a *
+          (b - Math.cos(deg2rad(u))) *
+          Math.sin(deg2rad(u)) *
+          Math.sin(deg2rad(v)),
+        Math.cos(deg2rad(u))
+      );
     }
   }
 
