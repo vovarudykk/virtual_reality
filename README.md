@@ -6,4 +6,4 @@ Light Spot, Shading Gouraud, Projection Ortho, Normal Facet average, Light path 
 
 Surface of Revolution “Pear”
 
-![Animation]()
+![Animation](https://github.com/vovarudykk/VGGI/blob/PA2/Screens/pa2_gif.gif)
