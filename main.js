@@ -116,9 +116,7 @@ function draw() {
 
   gl.uniform3fv(shProgram.iLightPosition, lightCoordinates());
   gl.uniform3fv(shProgram.iLightDirection, [1, 0, 0]);
-
   gl.uniform3fv(shProgram.iLightVec, new Float32Array(3));
-
   gl.uniform1f(shProgram.iShininess, 1.0);
 
   gl.uniform3fv(shProgram.iAmbientColor, [0.5, 0, 0.4]);
@@ -228,7 +226,7 @@ function initGL() {
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
 
-  LoadTexture();
+  loadTexture();
 
   gl.enable(gl.DEPTH_TEST);
 }
@@ -295,36 +293,13 @@ function init() {
   draw();
 }
 
-window.addEventListener("keydown", function (event) {
-  switch (event.code) {
-    case "ArrowLeft":
-      left();
-      break;
-    case "ArrowRight":
-      right();
-      break;
-    case "KeyW":
-      console.log("keyW");
-      pressW();
-      break;
-    case "KeyS":
-      console.log("keyS");
-      pressS();
-      break;
-    case "KeyD":
-      console.log("keyD");
-      pressD();
-      break;
-    case "KeyA":
-      console.log("keyA");
-      pressA();
-      break;
-    default:
-      return;
-  }
-});
+const reDraw = () => {
+  const { vertexList, textureList } = CreateSurfaceData();
+  surface.BufferData(vertexList, textureList);
+  draw();
+};
 
-const LoadTexture = () => {
+const loadTexture = () => {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.src =
@@ -336,26 +311,27 @@ const LoadTexture = () => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    draw();
   });
 };
 
 const pressW = () => {
-  texturePoint.y = texturePoint.y + 1;
+  texturePoint.y += 0.5;
   reDraw();
 };
 
 const pressS = () => {
-  texturePoint.y = texturePoint.y - 1;
+  texturePoint.y -= 0.5;
   reDraw();
 };
 
 const pressA = () => {
-  texturePoint.x = texturePoint.x - 1;
+  texturePoint.x -= 0.5;
   reDraw();
 };
 
 const pressD = () => {
-  texturePoint.x = texturePoint.x + 1;
+  texturePoint.x += 0.5;
   reDraw();
 };
 
@@ -374,8 +350,27 @@ const lightCoordinates = () => {
   return [coord, -2, coord * coord];
 };
 
-const reDraw = () => {
-  const { vertexList, textureList } = CreateSurfaceData();
-  surface.BufferData(vertexList, textureList);
-  draw();
-};
+window.addEventListener("keydown", function (event) {
+  switch (event.code) {
+    case "ArrowLeft":
+      left();
+      break;
+    case "ArrowRight":
+      right();
+      break;
+    case "KeyW":
+      pressW();
+      break;
+    case "KeyS":
+      pressS();
+      break;
+    case "KeyD":
+      pressD();
+      break;
+    case "KeyA":
+      pressA();
+      break;
+    default:
+      return;
+  }
+});
