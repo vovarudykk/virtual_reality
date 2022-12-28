@@ -9,4 +9,4 @@ Map the texture over the surface from practical assignment #2.
 Implement texture rotation around user specified point.
 It has to be possible to move the point along the surface (u,v) space using a keyboard.
 
-![Animation](https://github.com/vovarudykk/VGGI/blob/PA2/Screens/cgw_gif.gif)
+![Animation](https://github.com/vovarudykk/VGGI/blob/CGW/Screens/cgw_gif.gif)
