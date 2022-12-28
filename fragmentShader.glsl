@@ -7,9 +7,9 @@ const fragmentShaderSource = `
 
 varying vec4 color;
 varying vec2 vTextureCoords;
-uniform sampler2D tmu;
+uniform sampler2D textureU;
 
 void main() {
-  vec4 texture = texture2D(tmu, vTextureCoords);
+  vec4 texture = texture2D(textureU, vTextureCoords);
   gl_FragColor = texture * color;
 }`;

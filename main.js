@@ -6,7 +6,8 @@ let shProgram; // A shader program
 let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse.
 
 let handlePosition = 0.0;
-const userPoint = { x: 40, y: 400 };
+
+const texturePoint = { x: 100, y: 400 };
 
 let a = 0.5;
 let b = 1;
@@ -67,16 +68,13 @@ function ShaderProgram(name, program) {
   this.iSpecularColor = -1;
 
   this.iShininess = -1;
-
   this.iLightPosition = -1;
   this.iLightVec = -1;
 
-  // TextureCoords
   this.iTextureCoords = -1;
-  this.iTMU = -1;
-
-  this.iFAngleRad = -1;
-  this.iFUserPoint = -1;
+  this.iTextureU = -1;
+  this.iTextureAngle = -1;
+  this.iTexturePoint = -1;
 
   this.Use = function () {
     gl.useProgram(this.prog);
@@ -130,64 +128,25 @@ function draw() {
   gl.uniform4fv(shProgram.iColor, [1, 1, 0, 1]);
 
   const angle = document.getElementById("rAngle").value;
-  gl.uniform1f(shProgram.iFAngleRad, deg2rad(+angle));
+  gl.uniform1f(shProgram.iTextureAngle, deg2rad(+angle));
 
-  const u = deg2rad(userPoint.x);
-  const v = deg2rad(userPoint.y);
+  const u = deg2rad(texturePoint.x);
+  const v = deg2rad(texturePoint.y);
 
-  gl.uniform2fv(shProgram.iFUserPoint, [
+  gl.uniform2fv(shProgram.iTexturePoint, [
     a * (b - cos(u)) * sin(u) * cos(v),
     a * (b - cos(u)) * sin(u) * sin(v),
   ]);
 
   gl.activeTexture(gl.TEXTURE0);
-  gl.uniform1i(shProgram.iTMU, 0);
+  gl.uniform1i(shProgram.iTextureU, 0);
 
   surface.Draw();
 }
 
-// const r = (z) => {
-//   return z * Math.sqrt((z * (a - z)) / b);
-// };
-
-// const x = (z, beta) => {
-//   return r(z) * Math.sin(beta);
-// };
-
-// const y = (z, beta) => {
-//   return r(z) * Math.cos(beta);
-// };
-
 const step = (max, splines = 20) => {
   return max / (splines - 1);
 };
-
-// function CreateSurfaceData() {
-//   let vertexList = [];
-//   let textureList = [];
-
-//   let splines = 32;
-
-//   let zMax = a;
-//   let betaMax = 2 * Math.PI;
-//   let zStep = step(zMax, splines);
-//   let betaStep = step(betaMax, splines);
-
-//   for (let z = 0; z <= a; z += zStep) {
-//     for (let beta = 0; beta <= 2 * Math.PI; beta += betaStep) {
-//       vertexList.push(x(r(z), beta), y(r(z), beta), z);
-//       textureList.push(z, beta);
-//       vertexList.push(
-//         x(r(z + zStep), beta + betaStep),
-//         y(r(z + zStep), beta + betaStep),
-//         z + zStep
-//       );
-//       textureList.push(z + zStep, beta + betaStep);
-//     }
-//   }
-
-//   return { vertexList, textureList };
-// }
 
 const cos = (x) => {
   return Math.cos(x);
@@ -207,8 +166,12 @@ function CreateSurfaceData() {
   let stepU = step(maxU, splines);
   let stepV = step(maxV, splines);
 
-  let calculateUV = (u, v) => {
-    return [u / maxU, v / maxV];
+  let getU = (u) => {
+    return u / maxU;
+  };
+
+  let getV = (v) => {
+    return v / maxV;
   };
 
   for (let u = 0; u <= maxU; u += stepU) {
@@ -218,20 +181,13 @@ function CreateSurfaceData() {
         a * (b - cos(u)) * sin(u) * sin(v),
         cos(u)
       );
-      // console.log(
-      //   `x = ${a * (b - cos(u)) * sin(u) * cos(v)} | y = ${
-      //     a * (b - cos(u)) * sin(u) * sin(v)
-      //   } | z = ${cos(u)}`
-      // );
-      textureList.push(...calculateUV(u, v));
-      // let tmp = calculateUV(u, v);
-      // console.log(`u, v = ${tmp}`);
+      textureList.push(getU(u), getV(v));
       vertexList.push(
         a * (b - cos(u + stepU)) * sin(u + stepU) * cos(v + stepV),
         a * (b - cos(u + stepU)) * sin(u + stepU) * sin(v + stepV),
         cos(u + stepU)
       );
-      textureList.push(...calculateUV(u + stepU, v + stepV));
+      textureList.push(getU(u + stepU), getV(v + stepV));
     }
   }
   return { vertexList, textureList };
@@ -262,12 +218,11 @@ function initGL() {
 
   shProgram.iLightPosition = gl.getUniformLocation(prog, "lightPosition");
   shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
-  // TEXTURE
-  shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
-  shProgram.iTMU = gl.getUniformLocation(prog, "tmu");
 
-  shProgram.iFAngleRad = gl.getUniformLocation(prog, "fAngleRad");
-  shProgram.iFUserPoint = gl.getUniformLocation(prog, "fUserPoint");
+  shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
+  shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
+  shProgram.iTextureAngle = gl.getUniformLocation(prog, "textureAngle");
+  shProgram.iTexturePoint = gl.getUniformLocation(prog, "texturePoint");
 
   surface = new Model("Surface");
   const { vertexList, textureList } = CreateSurfaceData();
@@ -385,22 +340,22 @@ const LoadTexture = () => {
 };
 
 const pressW = () => {
-  userPoint.y = userPoint.y + 1;
+  texturePoint.y = texturePoint.y + 1;
   reDraw();
 };
 
 const pressS = () => {
-  userPoint.y = userPoint.y - 1;
+  texturePoint.y = texturePoint.y - 1;
   reDraw();
 };
 
 const pressA = () => {
-  userPoint.x = userPoint.x - 1;
+  texturePoint.x = texturePoint.x - 1;
   reDraw();
 };
 
 const pressD = () => {
-  userPoint.x = userPoint.x + 1;
+  texturePoint.x = texturePoint.x + 1;
   reDraw();
 };
 
@@ -422,6 +377,5 @@ const lightCoordinates = () => {
 const reDraw = () => {
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
-  console.log(`x = ${userPoint.x} | y = ${userPoint.y}`);
   draw();
 };
