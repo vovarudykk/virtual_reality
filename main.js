@@ -6,9 +6,10 @@ let shProgram; // A shader program
 let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse.
 
 let handlePosition = 0.0;
+const userPoint = { x: 40, y: 400 };
 
-let a = 6;
-let b = 20;
+let a = 0.5;
+let b = 1;
 
 const deg2rad = (angle) => {
   return (angle * Math.PI) / 180;
@@ -18,11 +19,19 @@ const deg2rad = (angle) => {
 function Model(name) {
   this.name = name;
   this.iVertexBuffer = gl.createBuffer();
+  this.iTextureBuffer = gl.createBuffer();
   this.count = 0;
 
-  this.BufferData = function (vertices) {
+  this.BufferData = function (vertices, textures) {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STREAM_DRAW);
+
+    gl.enableVertexAttribArray(shProgram.iTextureCoords);
+    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
+
     this.count = vertices.length / 3;
   };
 
@@ -62,6 +71,13 @@ function ShaderProgram(name, program) {
   this.iLightPosition = -1;
   this.iLightVec = -1;
 
+  // TextureCoords
+  this.iTextureCoords = -1;
+  this.iTMU = -1;
+
+  this.iFAngleRad = -1;
+  this.iFUserPoint = -1;
+
   this.Use = function () {
     gl.useProgram(this.prog);
   };
@@ -76,13 +92,13 @@ function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
-  let projection = m4.perspective(Math.PI / 3, 1, 1, 1000);
+  let projection = m4.perspective(Math.PI / 8, 1, 8, 12);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
-  let rotateToPointZero = m4.axisRotation([1, 0, 0], 1);
-  let translateToPointZero = m4.translation(0, 2, -10);
+  let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
+  let translateToPointZero = m4.translation(0, 0, -10);
 
   let matAccum0 = m4.multiply(rotateToPointZero, modelView);
   let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
@@ -113,87 +129,113 @@ function draw() {
   /* Draw the six faces of a cube, with different colors. */
   gl.uniform4fv(shProgram.iColor, [1, 1, 0, 1]);
 
+  const angle = document.getElementById("rAngle").value;
+  gl.uniform1f(shProgram.iFAngleRad, deg2rad(+angle));
+
+  const u = deg2rad(userPoint.x);
+  const v = deg2rad(userPoint.y);
+
+  gl.uniform2fv(shProgram.iFUserPoint, [
+    a * (b - cos(u)) * sin(u) * cos(v),
+    a * (b - cos(u)) * sin(u) * sin(v),
+  ]);
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1i(shProgram.iTMU, 0);
+
   surface.Draw();
 }
 
-const r = (z) => {
-  return z * Math.sqrt((z * (a - z)) / b);
-};
+// const r = (z) => {
+//   return z * Math.sqrt((z * (a - z)) / b);
+// };
 
-const x = (z, beta) => {
-  return r(z) * Math.sin(beta);
-};
+// const x = (z, beta) => {
+//   return r(z) * Math.sin(beta);
+// };
 
-const y = (z, beta) => {
-  return r(z) * Math.cos(beta);
-};
+// const y = (z, beta) => {
+//   return r(z) * Math.cos(beta);
+// };
 
 const step = (max, splines = 20) => {
   return max / (splines - 1);
 };
 
-function CreateSurfaceData() {
-  let vertexList = [];
-
-  let splines = 32;
-
-  let zMax = a;
-  let betaMax = 2 * Math.PI;
-  let zStep = step(zMax, splines);
-  let betaStep = step(betaMax, splines);
-
-  let upSurface = 0;
-
-  for (let z = 0; z <= a; z += zStep) {
-    for (let beta = 0; beta <= 2 * Math.PI; beta += betaStep) {
-      vertexList.push(x(r(z), beta), y(r(z), beta), z + upSurface);
-      vertexList.push(
-        x(r(z + zStep), beta + betaStep),
-        y(r(z + zStep), beta + betaStep),
-        z + zStep + upSurface
-      );
-    }
-  }
-
-  return vertexList;
-}
-
-// const cos = (x) => {
-//   return Math.cos(x);
-// };
-
-// const sin = (x) => {
-//   return Math.sin(x);
-// };
-
 // function CreateSurfaceData() {
 //   let vertexList = [];
-//   let splines = 20;
+//   let textureList = [];
 
-//   let maxU = Math.PI;
-//   let maxV = 2 * Math.PI;
-//   let stepU = step(maxU, splines);
-//   let stepV = step(maxV, splines);
+//   let splines = 32;
 
-//   console.log(`maxU=${maxU}|stepU=${stepU}`);
-//   console.log(`maxV=${maxV}|stepV=${stepV}`);
+//   let zMax = a;
+//   let betaMax = 2 * Math.PI;
+//   let zStep = step(zMax, splines);
+//   let betaStep = step(betaMax, splines);
 
-//   for (let u = 0; u <= maxU; u += stepU) {
-//     for (let v = 0; v <= maxV; v += stepV) {
+//   for (let z = 0; z <= a; z += zStep) {
+//     for (let beta = 0; beta <= 2 * Math.PI; beta += betaStep) {
+//       vertexList.push(x(r(z), beta), y(r(z), beta), z);
+//       textureList.push(z, beta);
 //       vertexList.push(
-//         a * (b - cos(u)) * sin(u) * cos(v),
-//         a * (b - cos(u)) * sin(u) * sin(v),
-//         cos(u)
+//         x(r(z + zStep), beta + betaStep),
+//         y(r(z + zStep), beta + betaStep),
+//         z + zStep
 //       );
-//       vertexList.push(
-//         a * (b - cos(u + stepU)) * sin(u + stepU) * cos(v + stepV),
-//         a * (b - cos(u + stepU)) * sin(u + stepU) * sin(v + stepV),
-//         cos(u + stepU)
-//       );
+//       textureList.push(z + zStep, beta + betaStep);
 //     }
 //   }
-//   return vertexList;
+
+//   return { vertexList, textureList };
 // }
+
+const cos = (x) => {
+  return Math.cos(x);
+};
+
+const sin = (x) => {
+  return Math.sin(x);
+};
+
+function CreateSurfaceData() {
+  let vertexList = [];
+  let textureList = [];
+  let splines = 20;
+
+  let maxU = Math.PI;
+  let maxV = 2 * Math.PI;
+  let stepU = step(maxU, splines);
+  let stepV = step(maxV, splines);
+
+  let calculateUV = (u, v) => {
+    return [u / maxU, v / maxV];
+  };
+
+  for (let u = 0; u <= maxU; u += stepU) {
+    for (let v = 0; v <= maxV; v += stepV) {
+      vertexList.push(
+        a * (b - cos(u)) * sin(u) * cos(v),
+        a * (b - cos(u)) * sin(u) * sin(v),
+        cos(u)
+      );
+      // console.log(
+      //   `x = ${a * (b - cos(u)) * sin(u) * cos(v)} | y = ${
+      //     a * (b - cos(u)) * sin(u) * sin(v)
+      //   } | z = ${cos(u)}`
+      // );
+      textureList.push(...calculateUV(u, v));
+      // let tmp = calculateUV(u, v);
+      // console.log(`u, v = ${tmp}`);
+      vertexList.push(
+        a * (b - cos(u + stepU)) * sin(u + stepU) * cos(v + stepV),
+        a * (b - cos(u + stepU)) * sin(u + stepU) * sin(v + stepV),
+        cos(u + stepU)
+      );
+      textureList.push(...calculateUV(u + stepU, v + stepV));
+    }
+  }
+  return { vertexList, textureList };
+}
 
 /* Initialize the WebGL context. Called from init() */
 function initGL() {
@@ -220,9 +262,18 @@ function initGL() {
 
   shProgram.iLightPosition = gl.getUniformLocation(prog, "lightPosition");
   shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
+  // TEXTURE
+  shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
+  shProgram.iTMU = gl.getUniformLocation(prog, "tmu");
+
+  shProgram.iFAngleRad = gl.getUniformLocation(prog, "fAngleRad");
+  shProgram.iFUserPoint = gl.getUniformLocation(prog, "fUserPoint");
 
   surface = new Model("Surface");
-  surface.BufferData(CreateSurfaceData());
+  const { vertexList, textureList } = CreateSurfaceData();
+  surface.BufferData(vertexList, textureList);
+
+  LoadTexture();
 
   gl.enable(gl.DEPTH_TEST);
 }
@@ -290,17 +341,68 @@ function init() {
 }
 
 window.addEventListener("keydown", function (event) {
-  switch (event.key) {
+  switch (event.code) {
     case "ArrowLeft":
       left();
       break;
     case "ArrowRight":
       right();
       break;
+    case "KeyW":
+      console.log("keyW");
+      pressW();
+      break;
+    case "KeyS":
+      console.log("keyS");
+      pressS();
+      break;
+    case "KeyD":
+      console.log("keyD");
+      pressD();
+      break;
+    case "KeyA":
+      console.log("keyA");
+      pressA();
+      break;
     default:
       return;
   }
 });
+
+const LoadTexture = () => {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.src =
+    "https://www.the3rdsequence.com/texturedb/download/255/texture/jpg/1024/ice+frost-1024x1024.jpg";
+
+  image.addEventListener("load", () => {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  });
+};
+
+const pressW = () => {
+  userPoint.y = userPoint.y + 1;
+  reDraw();
+};
+
+const pressS = () => {
+  userPoint.y = userPoint.y - 1;
+  reDraw();
+};
+
+const pressA = () => {
+  userPoint.x = userPoint.x - 1;
+  reDraw();
+};
+
+const pressD = () => {
+  userPoint.x = userPoint.x + 1;
+  reDraw();
+};
 
 const left = () => {
   handlePosition -= 0.07;
@@ -318,6 +420,8 @@ const lightCoordinates = () => {
 };
 
 const reDraw = () => {
-  surface.BufferData(CreateSurfaceData());
+  const { vertexList, textureList } = CreateSurfaceData();
+  surface.BufferData(vertexList, textureList);
+  console.log(`x = ${userPoint.x} | y = ${userPoint.y}`);
   draw();
 };

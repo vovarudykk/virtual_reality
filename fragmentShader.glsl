@@ -5,10 +5,11 @@ const fragmentShaderSource = `
     precision mediump float;
 #endif
 
-#define GLSLIFY 1
-
 varying vec4 color;
+varying vec2 vTextureCoords;
+uniform sampler2D tmu;
 
 void main() {
-    gl_FragColor = color;
+  vec4 texture = texture2D(tmu, vTextureCoords);
+  gl_FragColor = texture * color;
 }`;
