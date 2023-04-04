@@ -81,16 +81,40 @@ function ShaderProgram(name, program) {
   };
 }
 
-/* Draws a colored cube, along with a set of coordinate axes.
- * (Note that the use of the above drawPrimitive function is not an efficient
- * way to draw with WebGL.  Here, the geometry is so simple that it doesn't matter.)
- */
-function draw() {
-  gl.clearColor(0, 0, 0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function leftFrustum(stereoCamera) {
+  const { eyeSeparation, convergence, aspectRatio, fov, near, far } =
+    stereoCamera;
+  const top = near * Math.tan(fov / 2);
+  const bottom = -top;
 
+  const a = aspectRatio * Math.tan(fov / 2) * convergence;
+  const b = a - eyeSeparation / 2;
+  const c = a + eyeSeparation / 2;
+
+  const left = (-b * near) / convergence;
+  const right = (c * near) / convergence;
+
+  return m4.frustum(left, right, bottom, top, near, far);
+}
+
+function rightFrustum(stereoCamera) {
+  const { eyeSeparation, convergence, aspectRatio, fov, near, far } =
+    stereoCamera;
+  const top = near * Math.tan(fov / 2);
+  const bottom = -top;
+
+  const a = aspectRatio * Math.tan(fov / 2) * convergence;
+  const b = a - eyeSeparation / 2;
+  const c = a + eyeSeparation / 2;
+
+  const left = (-c * near) / convergence;
+  const right = (b * near) / convergence;
+  return m4.frustum(left, right, bottom, top, near, far);
+}
+
+function drawLeft() {
   /* Set the values of the projection transformation */
-  let projection = m4.perspective(Math.PI / 8, 1, 8, 12);
+  let projection = leftFrustum(stereoCamera);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
@@ -100,11 +124,12 @@ function draw() {
 
   let matAccum0 = m4.multiply(rotateToPointZero, modelView);
   let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
+
   const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
 
   /* Multiply the projection matrix times the modelview matrix to give the
-       combined transformation matrix, and send that to the shader program. */
+     combined transformation matrix, and send that to the shader program. */
   let modelViewProjection = m4.multiply(projection, matAccum1);
 
   gl.uniformMatrix4fv(
@@ -112,7 +137,51 @@ function draw() {
     false,
     modelViewProjection
   );
+
   gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
+
+  surface.Draw();
+}
+
+function drawRight() {
+  /* Set the values of the projection transformation */
+  let projection = rightFrustum(stereoCamera);
+
+  /* Get the view matrix from the SimpleRotator object.*/
+  let modelView = spaceball.getViewMatrix();
+
+  let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
+  let translateToPointZero = m4.translation(0, 0, -10);
+
+  let matAccum0 = m4.multiply(rotateToPointZero, modelView);
+  let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
+
+  const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
+  const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
+
+  /* Multiply the projection matrix times the modelview matrix to give the
+     combined transformation matrix, and send that to the shader program. */
+  let modelViewProjection = m4.multiply(projection, matAccum1);
+
+  gl.uniformMatrix4fv(
+    shProgram.iModelViewProjectionMatrix,
+    false,
+    modelViewProjection
+  );
+
+  gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
+
+  surface.Draw();
+}
+
+function draw() {
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.colorMask(true, false, false, true);
+  drawLeft();
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.colorMask(false, true, true, true);
+  drawRight();
 
   gl.uniform3fv(shProgram.iLightPosition, lightCoordinates());
   gl.uniform3fv(shProgram.iLightDirection, [1, 0, 0]);
@@ -138,8 +207,6 @@ function draw() {
 
   gl.activeTexture(gl.TEXTURE0);
   gl.uniform1i(shProgram.iTextureU, 0);
-
-  surface.Draw();
 }
 
 const step = (max, splines = 20) => {
@@ -226,8 +293,6 @@ function initGL() {
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
 
-  loadTexture();
-
   gl.enable(gl.DEPTH_TEST);
 }
 
@@ -288,6 +353,20 @@ function init() {
     return;
   }
 
+  const videoElement = document.querySelector("video");
+
+  const eyeSeparationInput = document.getElementById("eyeSeparation");
+  const convergenceInput = document.getElementById("convergence");
+  const fovInput = document.getElementById("fov");
+  const nearInput = document.getElementById("near");
+
+  eyeSeparationInput.addEventListener("input", stereoCam);
+  convergenceInput.addEventListener("input", stereoCam);
+  fovInput.addEventListener("input", stereoCam);
+  nearInput.addEventListener("input", stereoCam);
+
+  loadTexture();
+
   spaceball = new TrackballRotator(canvas, draw, 0);
 
   draw();
@@ -303,7 +382,7 @@ const loadTexture = () => {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.src =
-    "https://www.the3rdsequence.com/texturedb/download/255/texture/jpg/1024/ice+frost-1024x1024.jpg";
+    "https://www.the3rdsequence.com/texturedb/download/162/texture/jpg/1024/irregular+wood+tiles-1024x1024.jpg";
 
   image.addEventListener("load", () => {
     const texture = gl.createTexture();
