@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
-    <title>CGW</title>
+    <title>PA1</title>
     <style>
       body {
         background-color: #eeeeee;
@@ -17,9 +17,14 @@
     <script src="./main.js"></script>
   </head>
   <body onload="init()">
-    <h1>CGW, Variant #18</h1>
-    <h1>TR-23mp, Rudyk Volodymyr</h1>
-    <h1>Surface of Revolution “Pear”</h1>
+    <h1 style="font-size: 20px">PA1, Variant #16</h1>
+    <h2 style="font-size: 18px; font-weight: 300">
+      Surface of Revolution “Pear”
+    </h2>
+    <h2 style="font-size: 18px; font-weight: 300">TR-23mp, Rudyk Volodymyr</h2>
+    <h3 style="font-size: 16px; font-weight: 300; font-style: italic">
+      Surface from previuos credit module, when I was variant #18
+    </h3>
 
     <div id="textureControls">
       <label for="rAngle">Angle from -180 to 180:</label>
@@ -66,7 +71,7 @@
         min="0"
         max="90"
         step="1"
-        value="15"
+        value="30"
       />
     </div>
     <div>
@@ -76,9 +81,9 @@
         id="near"
         name="near"
         min="0"
-        max="11"
-        step="0.001"
-        value="0.01"
+        max="20"
+        step="1"
+        value="10"
       />
     </div>
 
@@ -86,9 +91,9 @@
 
     <div id="canvas-holder">
       <canvas
+        id="webglcanvas"
         width="600"
         height="600"
-        id="webglcanvas"
         style="position: absolute"
       ></canvas>
     </div>

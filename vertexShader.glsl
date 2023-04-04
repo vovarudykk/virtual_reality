@@ -5,7 +5,7 @@ attribute vec2 textureCoords;
 
 uniform mat4 normalMatrix;
 uniform mat4 ModelViewProjectionMatrix;
-
+uniform mat4 ModelViewMatrix, ProjectionMatrix;
 uniform float shininess;
 uniform vec3 ambientColor;
 uniform vec3 diffuseColor;
@@ -18,6 +18,7 @@ uniform vec2 texturePoint;
 
 varying vec4 color;
 varying vec2 vTextureCoords;
+uniform vec4 colorU;
 
 mat4 getRotateMatix(float angleRad) {
   float c = cos(angleRad);
@@ -41,10 +42,10 @@ mat4 getTranslateMatrix(vec2 point) {
 }
 
 void main() {
-    vec4 vertexPosition4 = ModelViewProjectionMatrix * vec4(vertex, 1.0);
+    vec4 vertexPosition4 = ModelViewMatrix * vec4(vertex, 1.0);
     vec3 vertexPosition = vec3(vertexPosition4) / vertexPosition4.w;
     vec3 normalInterpolation = vec3(normalMatrix * vec4(normal, 0.0));
-    gl_Position = vertexPosition4;
+    gl_Position = ProjectionMatrix*vertexPosition4;
     
     vec3 normal = normalize(normalInterpolation);
     vec3 lightDirection = normalize(lightPosition - vertexPosition);
@@ -70,6 +71,7 @@ void main() {
     vec4 vTranslatedBackMatrix = vRotatedMatrix * translatedBackMatrix;
 
     vTextureCoords = vec2(vTranslatedBackMatrix);
+    vTextureCoords = textureCoords;
 
     color = vec4(diffuse + ambient + specular, 1.0);
 }`;
