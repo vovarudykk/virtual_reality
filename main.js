@@ -336,7 +336,7 @@ const loadTexture = () => {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.src =
-    "https://www.the3rdsequence.com/texturedb/download/162/texture/jpg/1024/irregular+wood+tiles-1024x1024.jpg";
+    "https://www.the3rdsequence.com/texturedb/download/195/texture/jpg/1024/white+cracked+concrete-1024x1024.jpg";
 
   image.addEventListener("load", () => {
     texture = gl.createTexture();
