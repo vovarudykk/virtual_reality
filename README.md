@@ -1,12 +1,14 @@
-# Calculation and graphics work
+# PA1, Variant #16
 
-Variant #18
 Surface of Revolution “Pear”
-Light Spot, Shading Gouraud, Projection Ortho, Normal Facet average, Light path parabola.
+TR-23mp, Rudyk Volodymyr
+Surface from previuos credit module, when I was variant #18
 
 Requirements
-Map the texture over the surface from practical assignment #2.
-Implement texture rotation around user specified point.
-It has to be possible to move the point along the surface (u,v) space using a keyboard.
+You need to develop the software delivering anaglyphic stereo image of a model.
+Use the surface from Visualization of graphic data and geometric information credit module.
+Make sure the surface has some visual details (e.g. wirefarme + filled polygons) or a texture on top.
 
-![Animation](https://github.com/vovarudykk/VGGI/blob/CGW/Screens/cgw_gif.gif)
+The surface has to be rendered in negative parallax while the video from the camera in zero parallax.
+
+![Animation](https://github.com/vovarudykk/virtual_reality/blob/PA1/Screens/pa1.gif)
