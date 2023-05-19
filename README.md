@@ -1,4 +1,4 @@
-# PA1, Variant #16
+# PA2, Variant #16
 
 Surface of Revolution “Pear”
 TR-23mp, Rudyk Volodymyr
