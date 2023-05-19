@@ -150,7 +150,7 @@ function draw() {
       orientationEvent.beta,
       orientationEvent.gamma
     );
-    let translationMatrix = m4.translation(0, 0, -2);
+    let translationMatrix = m4.translation(0, 0, -1);
 
     modelView = m4.multiply(rotationMatrix, translationMatrix);
   }
@@ -389,7 +389,7 @@ const loadTexture = () => {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.src =
-    "https://www.the3rdsequence.com/texturedb/download/195/texture/jpg/1024/white+cracked+concrete-1024x1024.jpg";
+    "https://www.the3rdsequence.com/texturedb/download/200/texture/jpg/1024/stone+tile+grass-256x256.jpg";
 
   image.addEventListener("load", () => {
     texture = gl.createTexture();
