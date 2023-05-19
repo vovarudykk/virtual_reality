@@ -7,7 +7,7 @@ let spaceball; // A SimpleRotator object that lets the user rotate the view by m
 let texture;
 let stereoCamera;
 
-let webCamTexture, webCamVideo, webCamTrack, webCamSurface;
+let webCamTexture, webCamVideo, webCamBackground;
 
 let handlePosition = 0.0;
 
@@ -45,19 +45,6 @@ function Model(name) {
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iAttribVertex);
 
-    gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iNormal);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
-    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iTextureCoords);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
-  };
-  this.DrawBackground = function () {
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
-    gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iAttribVertex);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
     gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iTextureCoords);
@@ -69,29 +56,12 @@ function Model(name) {
 function ShaderProgram(name, program) {
   this.name = name;
   this.prog = program;
-
   // Location of the attribute variable in the shader program.
   this.iAttribVertex = -1;
-  // Location of the uniform specifying a color for the primitive.
-  this.iColor = -1;
   // Location of the uniform matrix representing the combined transformation.
   this.iModelViewProjectionMatrix = -1;
-
-  this.iNormal = -1;
-  this.iNormalMatrix = -1;
-
-  this.iAmbientColor = -1;
-  this.iDiffuseColor = -1;
-  this.iSpecularColor = -1;
-
-  this.iShininess = -1;
-  this.iLightPosition = -1;
-  this.iLightVec = -1;
-
   this.iTextureCoords = -1;
   this.iTextureU = -1;
-  this.iTextureAngle = -1;
-  this.iTexturePoint = -1;
 
   this.Use = function () {
     gl.useProgram(this.prog);
@@ -133,57 +103,29 @@ function draw() {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // let projection = m4.perspective(Math.PI / 8, 1, 8, 12);
-  let projection = m4.orthographic(0, 1, 0, 1, -1, 1);
-
-  let projectionLeft = leftFrustum(stereoCamera);
-  let projectionRight = rightFrustum(stereoCamera);
-
   let modelView = spaceball.getViewMatrix();
-
   let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
-  let translateToPointZero = m4.translation(0.0, 0, -10);
-  let translateToLeft = m4.translation(-0.03, 0, -20);
-  let translateToRight = m4.translation(0.03, 0, -20);
-
   let matAccum = m4.multiply(rotateToPointZero, modelView);
+  let projection = m4.orthographic(0, 1, 0, 1, -1, 1);
   let noRot = m4.multiply(
     rotateToPointZero,
     [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
   );
-  let matAccum1 = m4.multiply(translateToPointZero, noRot);
-  let modelViewProjection = m4.multiply(projection, matAccum1);
-  const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
-  const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
 
-  gl.uniformMatrix4fv(
-    shProgram.iModelViewProjectionMatrix,
-    false,
-    modelViewProjection
-  );
-  gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
+  const stereoCamera = {
+    eyeSeparation: parseFloat(document.getElementById("eyeSeparation").value),
+    convergence: parseFloat(document.getElementById("convergence").value),
+    aspectRatio: gl.canvas.width / gl.canvas.height,
+    fov: parseFloat(document.getElementById("fov").value),
+    near: parseFloat(document.getElementById("near").value),
+    far: 20.0,
+  };
 
-  gl.uniform3fv(shProgram.iLightPosition, lightCoordinates());
-  gl.uniform3fv(shProgram.iLightDirection, [1, 0, 0]);
-  gl.uniform3fv(shProgram.iLightVec, new Float32Array(3));
-  gl.uniform1f(shProgram.iShininess, 1.0);
+  let projectionLeft = leftFrustum(stereoCamera);
+  let projectionRight = rightFrustum(stereoCamera);
 
-  gl.uniform3fv(shProgram.iAmbientColor, [0.5, 1, 1.0]);
-  gl.uniform3fv(shProgram.iDiffuseColor, [0.5, 1.0, 0.0]);
-  gl.uniform3fv(shProgram.iSpecularColor, [0.5, 1.0, 1.0]);
-  /* Draw the six faces of a cube, with different colors. */
-  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 1]);
-
-  const angle = document.getElementById("rAngle").value;
-  gl.uniform1f(shProgram.iTextureAngle, deg2rad(+angle));
-
-  const u = deg2rad(texturePoint.x);
-  const v = deg2rad(texturePoint.y);
-
-  gl.uniform2fv(shProgram.iTexturePoint, [
-    a * (b - cos(u)) * sin(u) * cos(v),
-    a * (b - cos(u)) * sin(u) * sin(v),
-  ]);
+  let translateToLeft = m4.translation(-0.03, 0, -20);
+  let translateToRight = m4.translation(0.03, 0, -20);
 
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, noRot);
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
@@ -196,17 +138,14 @@ function draw() {
     gl.UNSIGNED_BYTE,
     webCamVideo
   );
-  webCamSurface.DrawBackground();
-  gl.uniform4fv(shProgram.iColor, [0, 0, 0, 1]);
-
-  gl.activeTexture(gl.TEXTURE0);
-  gl.uniform1i(shProgram.iTextureU, 0);
+  webCamBackground?.Draw();
 
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.clear(gl.DEPTH_BUFFER_BIT);
-  // surface.Draw();
+
   let matAccumLeft = m4.multiply(translateToLeft, matAccum);
   let matAccumRight = m4.multiply(translateToRight, matAccum);
+
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumLeft);
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionLeft);
   gl.colorMask(true, false, false, false);
@@ -285,31 +224,16 @@ function initGL() {
   );
   shProgram.iModelViewMatrix = gl.getUniformLocation(prog, "ModelViewMatrix");
   shProgram.iProjectionMatrix = gl.getUniformLocation(prog, "ProjectionMatrix");
-  shProgram.iColor = gl.getUniformLocation(prog, "color");
-
-  shProgram.iNormal = gl.getAttribLocation(prog, "normal");
-  shProgram.iNormalMatrix = gl.getUniformLocation(prog, "normalMatrix");
-
-  shProgram.iAmbientColor = gl.getUniformLocation(prog, "ambientColor");
-  shProgram.iDiffuseColor = gl.getUniformLocation(prog, "diffuseColor");
-  shProgram.iSpecularColor = gl.getUniformLocation(prog, "specularColor");
-  shProgram.iColor = gl.getUniformLocation(prog, "colorU");
-
-  shProgram.iShininess = gl.getUniformLocation(prog, "shininess");
-
-  shProgram.iLightPosition = gl.getUniformLocation(prog, "lightPosition");
-  shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
 
   shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
   shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
-  shProgram.iTextureAngle = gl.getUniformLocation(prog, "textureAngle");
-  shProgram.iTexturePoint = gl.getUniformLocation(prog, "texturePoint");
 
   surface = new Model("Surface");
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
-  webCamSurface = new Model("Background");
-  webCamSurface.BufferData(
+
+  webCamBackground = new Model("Background");
+  webCamBackground.BufferData(
     [
       0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
       0.0, 0.0, 0.0,
@@ -321,11 +245,6 @@ function initGL() {
 
   gl.enable(gl.DEPTH_TEST);
 }
-
-const continiousDraw = () => {
-  draw();
-  window.requestAnimationFrame(continiousDraw);
-};
 
 /* Creates a program for use in the WebGL context gl, and returns the
  * identifier for that program.  If an error occurs while compiling or
@@ -366,11 +285,13 @@ function init() {
   try {
     canvas = document.getElementById("webglcanvas");
     gl = canvas.getContext("webgl");
+
     webCamVideo = document.createElement("video");
     webCamVideo.setAttribute("autoplay", true);
-    window.vid = webCamVideo;
-    getWebcam();
-    webCamTexture = createWebCamTexture();
+    webCamTexture = createWebCamTexture(gl);
+
+    getWebcam().then((stream) => (webCamVideo.srcObject = stream));
+
     if (!gl) {
       throw "Browser does not support WebGL";
     }
@@ -391,42 +312,24 @@ function init() {
     return;
   }
 
-  stereoCamera = {
-    eyeSeparation: 0.004,
-    convergence: 1,
-    aspectRatio: gl.canvas.width / gl.canvas.height,
-    fov: deg2rad(15),
-    near: 10,
-    far: 20,
-  };
-
   const eyeSeparationInput = document.getElementById("eyeSeparation");
   const convergenceInput = document.getElementById("convergence");
   const fovInput = document.getElementById("fov");
   const nearInput = document.getElementById("near");
 
-  const stereoCam = () => {
-    stereoCamera.eyeSeparation = parseFloat(eyeSeparationInput.value);
-    stereoCamera.convergence = parseFloat(convergenceInput.value);
-    stereoCamera.fov = deg2rad(parseFloat(fovInput.value));
-    stereoCamera.near = parseFloat(nearInput.value);
-    draw();
-  };
-
-  eyeSeparationInput.addEventListener("input", stereoCam);
-  convergenceInput.addEventListener("input", stereoCam);
-  fovInput.addEventListener("input", stereoCam);
-  nearInput.addEventListener("input", stereoCam);
+  eyeSeparationInput.addEventListener("input", draw);
+  convergenceInput.addEventListener("input", draw);
+  fovInput.addEventListener("input", draw);
+  nearInput.addEventListener("input", draw);
 
   spaceball = new TrackballRotator(canvas, draw, 0);
 
-  continiousDraw();
+  reDraw();
 }
 
 const reDraw = () => {
-  const { vertexList, textureList } = CreateSurfaceData();
-  surface.BufferData(vertexList, textureList);
   draw();
+  window.requestAnimationFrame(reDraw);
 };
 
 const loadTexture = () => {
@@ -445,15 +348,10 @@ const loadTexture = () => {
 };
 
 const getWebcam = () => {
-  navigator.getUserMedia(
-    { video: true, audio: false },
-    function (stream) {
-      webCamVideo.srcObject = stream;
-      webCamTrack = stream.getTracks()[0];
-    },
-    function (e) {
-      console.error("Rejected!", e);
-    }
+  return new Promise((resolve) =>
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((s) => resolve(s))
   );
 };
 
@@ -466,64 +364,3 @@ const createWebCamTexture = () => {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return textureID;
 };
-
-const pressW = () => {
-  texturePoint.y += 0.5;
-  reDraw();
-};
-
-const pressS = () => {
-  texturePoint.y -= 0.5;
-  reDraw();
-};
-
-const pressA = () => {
-  texturePoint.x -= 0.5;
-  reDraw();
-};
-
-const pressD = () => {
-  texturePoint.x += 0.5;
-  reDraw();
-};
-
-const left = () => {
-  handlePosition -= 0.07;
-  reDraw();
-};
-
-const right = () => {
-  handlePosition += 0.07;
-  reDraw();
-};
-
-const lightCoordinates = () => {
-  let coord = Math.sin(handlePosition) * 1.2;
-  return [coord, -30, coord * coord];
-};
-
-window.addEventListener("keydown", function (event) {
-  switch (event.code) {
-    case "ArrowLeft":
-      left();
-      break;
-    case "ArrowRight":
-      right();
-      break;
-    case "KeyW":
-      pressW();
-      break;
-    case "KeyS":
-      pressS();
-      break;
-    case "KeyD":
-      pressD();
-      break;
-    case "KeyA":
-      pressA();
-      break;
-    default:
-      return;
-  }
-  reDraw();
-});
