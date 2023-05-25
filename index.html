@@ -78,12 +78,21 @@
       />
     </div>
 
+    <audio id="audio" controls loop>
+      <source src="audio.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
     <div id="canvas-holder">
       <canvas
         id="webglcanvas"
         width="600"
-        height="900"
-        style="position: absolute"
+        height="600"
+        style="
+          position: absolute;
+          padding-bottom: 10px;
+          background-color: bisque;
+        "
       ></canvas>
     </div>
   </body>
