@@ -110,10 +110,6 @@ function draw() {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  xPosition = parseFloat(document.getElementById("xPosition").value);
-  yPosition = parseFloat(document.getElementById("yPosition").value);
-  zPosition = parseFloat(document.getElementById("zPosition").value);
-
   let projection = m4.orthographic(0, 1, 0, 1, -1, 1);
 
   let modelView = spaceball.getViewMatrix();
@@ -150,11 +146,15 @@ function draw() {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.clear(gl.DEPTH_BUFFER_BIT);
 
-  let modelView1 = null;
-
   // draw sphere
 
+  let modelView1 = null;
+
   gl.bindTexture(gl.TEXTURE_2D, textureSphere);
+
+  xPosition = parseFloat(document.getElementById("xPosition").value);
+  yPosition = parseFloat(document.getElementById("yPosition").value);
+  zPosition = parseFloat(document.getElementById("zPosition").value);
 
   if (
     orientationEvent.alpha &&
@@ -515,22 +515,29 @@ function init() {
       // Create an AudioContext instance
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+      // Create an AudioSource
       audioSource = audioContext.createMediaElementSource(audio);
 
-      // Create a panner
+      // Create a PannerNode
       audioPanner = audioContext.createPanner();
-      audioPanner.panningModel = "HRTF"; // Set the panning model
-      audioPanner.distanceModel = "linear"; // Set the distance model
 
       // Create a highpass filter
       audioFilter = audioContext.createBiquadFilter();
+
+      // Set the panning model
+      audioPanner.panningModel = "HRTF";
+      // Set the distance model
+      audioPanner.distanceModel = "linear";
+      // set type of filter
       audioFilter.type = "highpass";
       // Set the cutoff frequency
       audioFilter.frequency.value = cutoffFrequencyInput.value;
 
-      // Connect the audio source to the filter, and the filter to the audio context destination
+      // Connect the audio source to the panner,
       audioSource.connect(audioPanner);
+      // and the panner to the filter,
       audioPanner.connect(audioFilter);
+      // and the filter to the audio context destination
       audioFilter.connect(audioContext.destination);
 
       audioContext.resume();

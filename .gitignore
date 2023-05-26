@@ -1,4 +1,4 @@
 node_modules
 ngrok.exe
 package-lock.json
-*.docx
+*.tmp
